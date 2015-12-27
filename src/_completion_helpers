@@ -60,6 +60,7 @@ function _join_lines() {
 # For each line that doesn't match the regexp empty elements will be added to the arrays.
 # If a line matches but a subexpressions doesn't then whatever is stored in the corresponding
 # element of $match (see zsh documentation) will be used instead.
+# NOTE: you must make sure that the bashrematch option is unset
 function _extract_parts() {
     OLDIFS=$IFS;IFS=;
     while read -r inputtxt; do
@@ -79,6 +80,45 @@ function _extract_parts() {
 	    let i=i+1
 	done
     done
+    IFS=$OLDIFS
+}
+
+# This function can be used to extract arguments for the _arguments function from lines of text.
+# The first argument should be a regular expression matching input lines and containing upto 3 subexpressions.
+# The first subexpression will matchs options, the (optional) 2nd subexpression matches option arguments,
+# and the third subexpression matches option descriptions from each line of input text.
+# Further arguments can be supplied defining how to complete option arguments. These extra arguments are
+# in the form "regex:description:action" where regex is a regular expression matching the extracted option argument
+# (according to the first arg), description is a description for the option argument, and action is an action as
+# explained in the _arguments documentation. Any extracted option argument that doesn't match any of the extra arguments
+# will be matched against anything when completing.
+# Example (completion of the picosat command):
+# compdef "_arguments : $(picosat -h | _join_lines ' ' 10 '^where' '^and' | _extract_for_arguments '^[[:space:]]*(-[-A-Za-z]+) (<[^<>]+>|\[[^][]+\])?[[:space:]]+(.*)' 'lit:literal:()' '(limit|seed):limit:{_guard "[0-9]#" "numeric value"}' '0-3:phase:(0 1 2 3)' '(output|trace|core):file:_files' )" picosat 
+function _extract_for_arguments() {
+    OLDIFS=$IFS;IFS=;
+    local output
+    while read -r inputtxt; do
+	if [[ "$inputtxt" =~ "$1" ]]; then
+	    set -A matches $match
+	    if [[ "${#matches}" -gt 2 ]] && [[ "${matches[2]}" =~ "[^[:space:]]" ]]; then
+		if [[ "${#@}" -gt 1 ]]; then
+		    for arg in "${@[2,-1]}"; do
+			if [[ "${matches[2]}" =~ "${arg%%:?##}" ]]; then
+			    extra="'${matches[1]}[${${${${${matches[3]## #}%% #}//=/}//\[/\\[}//\]/\\]}]:${${arg%:?##}#?##:}:${arg##?##:}' "
+			    break
+			fi
+			extra="'${matches[1]}[${${${${${matches[3]## #}%% #}//=/}//\[/\\[}//\]/\\]}]:${matches[2]}:( )' "
+		    done
+		else
+		    extra="'${matches[1]}[${${${${${matches[3]## #}%% #}//=/}//\[/\\[}//\]/\\]}]:${matches[2]}:( )' "
+		fi
+		output+="$extra" 
+	    else
+		output+="'${matches[1]}[${${${${${matches[2]## #}%% #}//=/}//\[/\\[}//\]/\\]}]' "
+	    fi
+	fi
+    done
+    echo "$output"
     IFS=$OLDIFS
 }
 
