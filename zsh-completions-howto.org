@@ -89,6 +89,7 @@ Examples of how to use these functions are given in the next section.
 *** functions for completing specific types of objects
 | _path_files     | Used to complete filepaths. Take several options to control behaviour.                                    |
 | _files          | Calls _path_files with all options except -g and -/. These options depend on file-patterns style setting. |
+| _file_systems   | names of different file systems (ext4, ntfs, etc.)                                                         |
 | _net_interfaces | Used for completing network interface names                                                               |
 | _users          | Used for completing user names                                                                            |
 | _groups         | Used for completing group names                                                                           |
@@ -115,7 +116,21 @@ The actions can take one of the following forms:
 | {EVAL-STRING}                     | Evaluate string as shell code to generate matches. This can be used to call a utility function with arguments, e.g. _values or _describe |
 | =ACTION                           | Inserts a dummy word into completion command line without changing the point at which completion takes place.                            |
 Not all action types are available for all utility functions that use them. For example the ->STRING type is not available in the
-_regex_arguments or _alternative functions. 
+_regex_arguments or _alternative functions (but is available for _arguments).
+** Useful variables
+The following variables can be used inside completion functions:
+| $service   | the name of the command being completed                                                                              |
+| $match     | array containing subexpression matches of previous regexp match using =~                                             |
+| $words     | array of words on the command line. Can be altered with compset                                                      |
+| $CURRENT   | index into $words of the current word (where the cursor is). Can be altered with compset                             |
+| $PREFIX    | part of the current word from the start (unless IPREFIX is non-empty) up to the cursor. Can be altered with compset. |
+| $IPREFIX   | part of current word before prefix. Not used for matching with completions. Can be altered with the compset command. |
+| $QIPREFIX  | contains quoted string upto word being completed, e.g. if cursor is at a in "foo baa" then QIPREFIX = \"foo b        |
+| $QISUFFIX  | like $QIPREFIX but for the end of the quoted string                                                                  |
+| $SUFFIX    | part of current word from cursor to the end (unless ISUFFIX is non-empty). Can be altered with compset.              |
+| $_comps    | assoc array of commands and corresponding completion functions                                                       |
+| $compstate | assoc array containing various keys & values used to exchange information with completion widget                     |
+<IPREFIX><PREFIX><SUFFIX><ISUFFIX>
 ** Writing simple completion functions using _describe
 The _describe function can be used for simple completions where the order and position of the options/arguments is
 not important. You just need to create an array parameter to hold the options & their descriptions, and then pass 
@@ -266,9 +281,9 @@ except that it has an extra : at the start, and now all of the possible ACTION f
 
 Here is an example:
 #+BEGIN_SRC sh 
-_regex_arguments _hello /$'[^\0]##\0'/ \( /$'word1(a|b|c)\0'/ ':word:first word:(word1a word1b word1c)' '|'\
+_regex_arguments _cmd /$'[^\0]##\0'/ \( /$'word1(a|b|c)\0'/ ':word:first word:(word1a word1b word1c)' '|'\
    /$'word11(a|b|c)\0'/ ':word:first word:(word11a word11b word11c)' \( /$'word2(a|b|c)\0'/ ':word:second word:(word2a word2b word2c)'\
-   '|' /$'word22(a|b|c)\0'/ ':word:second word:(word22a word22b word22c)' \) \)
+   '|' /$'word22(a|b|c)\0'/ ':file:file name:_files' \) \)
 _cmd "$@"
 #+END_SRC
 in this case the first word can be word1 or word11 followed by an a, b or c, and if the first word contains 11 then a second

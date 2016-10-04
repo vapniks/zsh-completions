@@ -53,12 +53,12 @@ function _join_lines() {
 # This function can be used to extract parts of lines into arrays. This is useful for extracting
 # completion information about commands by using the --help option.
 # It takes a variable number of arguments: a regexp (first arg), and the names of any number 
-# array variables (other args).
+# of empty array variables (other args).
 # For each line of input piped into the function it will try and match the regexp on the line
 # and save each parenthesised subexpression into one of the arrays (first subexpression into
 # the first array, second subexpression into the second array, etc.)
 # For each line that doesn't match the regexp empty elements will be added to the arrays.
-# If a line matches but a subexpressions doesn't then whatever is stored in the corresponding
+# If a line matches but a subexpression doesn't then whatever is stored in the corresponding
 # element of $match (see zsh documentation) will be used instead.
 # NOTE: you must make sure that the bashrematch option is unset
 function _extract_parts() {
@@ -84,37 +84,60 @@ function _extract_parts() {
 }
 
 # This function can be used to extract arguments for the _arguments function from lines of text.
-# The first argument should be a regular expression matching input lines and containing upto 3 subexpressions.
-# The first subexpression will matchs options, the (optional) 2nd subexpression matches option arguments,
-# and the third subexpression matches option descriptions from each line of input text.
-# Further arguments can be supplied defining how to complete option arguments. These extra arguments are
-# in the form "regex:description:action" where regex is a regular expression matching the extracted option argument
-# (according to the first arg), description is a description for the option argument, and action is an action as
-# explained in the _arguments documentation. Any extracted option argument that doesn't match any of the extra arguments
-# will be matched against anything when completing.
+# The first argument should be a regular expression matching input lines and containing upto 4 subexpressions.
+# By default the 1st subexpression matches long options, the 2nd matches short options, the 3rd matches option arguments,
+# and the 4th matches descriptions.
+# You can change this order by specifying a second argument of one or more colon separated chars, e.g. 'l:a:d'
+# where s = short option, l = long option, a = option argument (optarg), and d = description
+# Further arguments can be supplied specifying how to complete optargs. These extra arguments are in the form
+# "regex:description:action" where regex is a regular expression matching the extracted optarg, description is a description
+# for the option argument, and action is an action for completing the optarg as explained in the _arguments documentation.
+# The function will try to guess a description and action for any optarg that doesn't match any of these extra arguments. 
 # Example (completion of the picosat command):
-# compdef "_arguments : $(picosat -h | _join_lines ' ' 10 '^where' '^and' | _extract_for_arguments '^[[:space:]]*(-[-A-Za-z]+) (<[^<>]+>|\[[^][]+\])?[[:space:]]+(.*)' 'lit:literal:()' '(limit|seed):limit:{_guard "[0-9]#" "numeric value"}' '0-3:phase:(0 1 2 3)' '(output|trace|core):file:_files' )" picosat 
+# compdef "_arguments : $(picosat -h | _join_lines ' ' 10 '^where' '^and' | _extract_for_arguments '^[[:space:]]*(-[-A-Za-z]+) (<[^<>]+>|\[[^][]+\])?[[:space:]]+(.*)' 'l:a:d' 'lit:literal:()' '(limit|seed):limit:{_guard "[0-9]#" "numeric value"}' '0-3:phase:(0 1 2 3)' '(output|trace|core):file:_files' )" picosat 
 function _extract_for_arguments() {
     OLDIFS=$IFS;IFS=;
-    local output
+    local inputtxt output longopt shortopt optarg desc userorder action arg order='l:s:a:d'
+    # if user supplied a match group order, use that instead of default (l:s:a:d)    
+    if [[ "$2" =~ "^([lsad]:){1,3}[lsad]$" ]]; then
+	userorder=1
+	order=$2
+    fi
+    # add an extra optarg specification for completing files & directories
+    # (make sure user supplied order arg is not mistaken for optarg specification)
+    if [[ -z $userorder ]]; then
+	actions=( "${@[2,-1]}" )
+    else
+	actions=( "${@[3,-1]}" )
+    fi
+    actions+=( "(file|FILE|dir|DIR|path|PATH):file/directory:_files" "(num|NUM):number:{_guard '[0-9]#' 'numeric value'}" )
     while read -r inputtxt; do
 	if [[ "$inputtxt" =~ "$1" ]]; then
-	    set -A matches $match
-	    if [[ "${#matches}" -gt 2 ]] && [[ "${matches[2]}" =~ "[^[:space:]]" ]]; then
-		if [[ "${#@}" -gt 1 ]]; then
-		    for arg in "${@[2,-1]}"; do
-			if [[ "${matches[2]}" =~ "${arg%%:?##}" ]]; then
-			    extra="'${matches[1]}[${${${${${matches[3]## #}%% #}//=/}//\[/\\[}//\]/\\]}]:${${arg%:?##}#?##:}:${arg##?##:}' "
-			    break
-			fi
-			extra="'${matches[1]}[${${${${${matches[3]## #}%% #}//=/}//\[/\\[}//\]/\\]}]:${matches[2]}:( )' "
-		    done
-		else
-		    extra="'${matches[1]}[${${${${${matches[3]## #}%% #}//=/}//\[/\\[}//\]/\\]}]:${matches[2]}:( )' "
-		fi
-		output+="$extra" 
+	    # extract the match groups into the correct variables according to $order
+	    longopt=${match[${${(@s/:/)order}[(i)l]}]}
+	    shortopt=${match[${${(@s/:/)order}[(i)s]}]}
+	    # remove <>[]= chars from optarg name
+	    optarg=${match[${${(@s/:/)order}[(i)a]}]//[<>\[\]=]/}
+	    desc=${match[${${(@s/:/)order}[(i)d]}]}
+	    # create action string for option argument if it exists
+	    if [[ ! -z "$optarg" ]]; then
+		# default optarg action just displays the optarg
+		action=":$optarg:{_message \"$optarg\"}"
+		for arg in "${actions[@]}"; do
+		    if [[ "$optarg" =~ "${arg%%:?##}" ]]; then
+			action=":${${arg%:?##}#?##:}:${arg##?##:}"
+			break
+		    fi
+		done
 	    else
-		output+="'${matches[1]}[${${${${${matches[2]## #}%% #}//=/}//\[/\\[}//\]/\\]}]' "
+		action=""
+	    fi
+	    # add both long and short options
+	    if [[ ! -z $longopt ]]; then
+	       output+="'${longopt}[${${${${${desc## #}%% #}//=/}//\[/\\[}//\]/\\]}]$action' "
+	    fi
+	    if [[ ! -z $shortopt ]]; then
+	       output+="'${shortopt}[${${${${${desc## #}%% #}//=/}//\[/\\[}//\]/\\]}]$action' "
 	    fi
 	fi
     done
