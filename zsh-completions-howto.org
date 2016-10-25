@@ -89,7 +89,7 @@ Examples of how to use these functions are given in the next section.
 *** functions for completing specific types of objects
 | _path_files     | Used to complete filepaths. Take several options to control behaviour.                                    |
 | _files          | Calls _path_files with all options except -g and -/. These options depend on file-patterns style setting. |
-| _file_systems   | names of different file systems (ext4, ntfs, etc.)                                                         |
+| _file_systems   | names of different file systems (ext4, ntfs, etc.)                                                        |
 | _net_interfaces | Used for completing network interface names                                                               |
 | _users          | Used for completing user names                                                                            |
 | _groups         | Used for completing group names                                                                           |
@@ -380,6 +380,39 @@ Complete some MAC addresses one octet at a time:
 _multi_parts : '(00:11:22:33:44:55 00:23:34:45:56:67 00:23:45:56:67:78)'
 #+END_SRC
 
+** completing files and directories
+Here are some useful techniques for completing files and directories.
+
+Complete any file (starts in current directory):
+#+BEGIN_SRC
+_files
+#+END_SRC
+
+Complete any directory (starts in current directory):
+#+BEGIN_SRC
+_path_files -/ 
+#+END_SRC
+
+Complete files in a specific directory:
+#+BEGIN_SRC
+_files -P /path/to/dir/ -W /path/to/dir/
+#+END_SRC
+
+Complete .csv files in specific directory:
+#+BEGIN_SRC
+_path_files -P /path/to/dir/ -W /path/to/dir/ -g '*.csv'
+#+END_SRC
+
+Complete files in specific directory, but don't add that directory to the command line:
+#+BEGIN_SRC
+_files "$@" -W /path/to/dir/
+#+END_SRC
+
+Complete comma separated directories:
+#+BEGIN_SRC sh 
+compset -P '*,'
+_alternative 'dirs:comma separated directories:_path_files -/ -S ,'
+#+END_SRC
 ** Adding completion words directly using compadd
 For more fine grained control you can use the builtin compadd function to add completion words directly.
 This function has many different options for controlling how completions are displayed and how text on the command line 
