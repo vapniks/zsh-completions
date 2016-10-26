@@ -442,7 +442,7 @@ compset -P '*,'
 _path_files -/ -S ,
 #+END_SRC
 Note: the previous two examples use the compset builtin which allows you to manipulate how the shell treats completions. 
-You can use this trick with other functions aswell.
+You can use this trick with other functions aswell, or for testing the prefix/suffix of the current word on the command line.
 ** Adding completion words directly using compadd
 For more fine grained control you can use the builtin compadd function to add completion words directly.
 This function has many different options for controlling how completions are displayed and how text on the command line 
