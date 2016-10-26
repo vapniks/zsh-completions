@@ -208,10 +208,14 @@ _arguments '-s[sort output]' '--l[long output]' '-l[long output]'
 #+END_SRC
 Arguments for the option can be specified after the option description in this form '-OPT[DESCRIPTION]:MESSAGE:ACTION',
 where MESSAGE is a message to display and ACTION can be any of the forms mentioned in the ACTIONS section above.
+You can also allow for an (optional) equals sign to be placed directly between the option and its argument by placing 
+an equals sign in the option specification.
 For example:
 #+BEGIN_SRC sh 
-_arguments '-f[input file]:filename:_files' 
+_arguments '-f=[input file]:filename:_files' 
 #+END_SRC
+All options must begin with either +, - or --. If you want other kinds of options you will need to use a different
+function such as _regex_arguments (see next section).
 
 Command argument specifications take the form 'N:MESSAGE:ACTION' where N indicates that it is the Nth command argument,
 and MESSAGE & ACTION are as before. If the N is omitted then it just means the next command argument (after any that have
@@ -257,16 +261,15 @@ _cmd "$@"
 #+END_SRC
 
 The OTHER_ARGS should be sequences of specifications for matching & completing words on the command line.
-These sequences can be separated by '|' to represent alternative sequences of words.
-You can use bracketing to arbitrary depth to specify alternate subsequences, but the brackets must be backslashed like this \( \) 
-or quoted like this '(' ')'.
+You can use quoted parentheses and '|' to separate alternative sequences, and '#' to indicate that the previous
+sequence can repeat.
 
 For example:
 #+BEGIN_SRC sh 
-_regex_arguments _cmd SEQ1 '|' SEQ2 \( SEQ2a '|' SEQ2b \)
+_regex_arguments _cmd SEQ1 '#' '|' SEQ2 \( SEQ2a '|' SEQ2b \)
 _cmd "$@"
 #+END_SRC
-this specifies a command line matching either SEQ1, or SEQ2 followed by SEQ2a or SEQ2b.
+this specifies a command line matching either repeats of SEQ1, or SEQ2 followed by SEQ2a or SEQ2b.
 
 Each specification in a sequence must contain a / PATTERN/ part at the start followed by an optional ':TAG:DESCRIPTION:ACTION' 
 part. 
@@ -277,7 +280,7 @@ for that word. Note that there needs to be a pattern to match the initial comman
 See below for further explanation about PATTERNs.
 
 The ':TAG:DESCRIPTION:ACTION' part is interpreted in the same way as for the _alternative function specifications,
-except that it has an extra : at the start, and now all of the possible ACTION formats listed previously are allowed.
+except that it has an extra : at the start, and you cannot use the ->STRING form of ACTION.
 
 Here is an example:
 #+BEGIN_SRC sh 
@@ -288,24 +291,43 @@ _cmd "$@"
 #+END_SRC
 in this case the first word can be word1 or word11 followed by an a, b or c, and if the first word contains 11 then a second
 word is allowed which can be word2 followed by and a, b, or c, or a filename.
+Note that each pattern ends with \0, this ensures that there must be whitespace between completions. 
+Sometimes you might not want this requirement however (e.g. for options of the form --opt=), in which case you should remove the \0 from the end of the pattern.
 
-If this sounds too complicated a much simpler alternative is to use the _regex_words function for creating
-specifications for _regex_arguments. 
+If this sounds too complicated a much simpler alternative is to use the _regex_words function for creating specifications for _regex_arguments. 
 *** Patterns
+Patterns are matched using glob operators as explained here:  http://zsh.sourceforge.net/Doc/Release/Expansion.html#Filename-Generation
+
+QUOTING:
+
 You may notice that the / PATTERN/ specs in the previous example don't look like normal regular expressions.
 Often a string parameter in the form $'foo\0' is used. This is so that the \0 in the string is interpreted correctly
-as a null char which is used to separate words in the internal representation. If you don't include the \0 at the end
-of the pattern you may get problems matching the next word. If you need to use the contents of a variable in a pattern, 
-you can double quote it so that it gets expanded and then put a string parameter containing a null char afterwards, 
-like this: "$somevar"$'\0'
+as a null char which is used to separate words in the internal representation. 
 
-The regular expression syntax for patterns seems to be a bit different from normal regular expressions,
-and I can't find documentation anywhere. 
-However I have managed to work out what the following special chars are for:
-| *  | wildcard - any number of chars                                            |
-| ?  | wildcard - single char                                                    |
-| #  | zero or more of the previous char (like * in a normal regular expression) |
-| ## | one or more of the previous char (like + in a normal regular expression)  |
+If you don't include the \0 at the end of the pattern then there should be no space between the word matched by the pattern
+and the next word (this is sometimes desirable).
+
+If you need to use the contents of a variable in a pattern, you can double quote it so that it gets expanded and then put 
+a string parameter containing a null char afterwards, like this: "$somevar"$'\0'
+
+SYNTAX:
+| *     | wildcard - any number of chars                                                                      |
+| ?     | wildcard - single char                                                                              |
+| #     | zero or more of the previous pattern (like * in a normal regular expression)                        |
+| ##    | one or more of the previous pattern (like + in a normal regular expression)                         |
+| [..]  | matches any of the enclosed chars, can be a range (e.g. [a-z]) or a named class (e.g. [[:digit:] ]) |
+| [!..] | match any char NOT in the given set                                                                 |
+| <X-Y> | match any number between X and Y                                                                    |
+| (..)  | grouping contruct                                                                                   |
+| ^     | negate the following pattern                                                                        |
+| X~Y   | match X but not Y                                                                                   |
+For more details, see here: http://zsh.sourceforge.net/Doc/Release/Expansion.html#Filename-Generation
+
+EXAMPLES:
+/$'(foo|bar)\0'/ = matches either foo or bar
+/$'[ [:alnum:]]##\0'/ = matches a sequence of one or more letters or numbers
+/$'[![:alnum:]]##\0'/ = matches a sequence of one or more chars that are not letters or numbers
+/$'[^\0]##\0'/ = matches any unbroken sequence of chars
 *** _regex_words
 The _regex_words function makes it much easier to create specifications for _regex_arguments. 
 The results of calling _regex_words can be stored in a variable which can then be used instead 
