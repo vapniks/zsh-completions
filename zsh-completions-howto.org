@@ -431,10 +431,11 @@ _files "$@" -W /path/to/dir/
 #+END_SRC
 
 Complete comma separated directories:
-#+BEGIN_SRC sh 
+#+BEGIN_SRC 
 compset -P '*,'
 _alternative 'dirs:comma separated directories:_path_files -/ -S ,'
 #+END_SRC
+Note: this uses the compset builtin which allows you to manipulate how the shell treats completions. 
 ** Adding completion words directly using compadd
 For more fine grained control you can use the builtin compadd function to add completion words directly.
 This function has many different options for controlling how completions are displayed and how text on the command line 
