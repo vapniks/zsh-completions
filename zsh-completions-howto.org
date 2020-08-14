@@ -335,7 +335,7 @@ of a specification for _regex_arguments.
 
 To create a specification using _regex_words you supply it with a tag followed by a description followed by a list
 of specifications for individual words. These specifications take the form 'WORD:DESCRIPTION:SPEC' where WORD is the 
-word to be completed, DESCRIPTION is a description for it, and SPEC can be another variable created by _regex_words 
+word to be completed, DESCRIPTION is a description for it (must be non-empty), and SPEC can be another variable created by _regex_words 
 specifying words that come after the current word or blank if there are no further words.
 For example:
 #+BEGIN_SRC sh 
@@ -415,7 +415,7 @@ Complete any directory (starts in current directory):
 _path_files -/ 
 #+END_SRC
 
-Complete files in a specific directory:
+Complete files in a specific directory (must put / at end of paths):
 #+BEGIN_SRC
 _files -P /path/to/dir/ -W /path/to/dir/
 #+END_SRC
@@ -485,6 +485,11 @@ To reload a completion function:
 > unfunction _func
 > autoload -U _func
 #+END_SRC
+To reload all functions matching a pattern (in this case functions with names beginning with "_func_"):
+#+BEGIN_SRC sh 
+> unfunction -m _func\*
+> autoload -U _func
+#+END_SRC
 
 The following functions can be called to obtain useful information. 
 If the default keybindings don't work you can try pressing Alt+x and then enter the command name.
@@ -494,18 +499,24 @@ If the default keybindings don't work you can try pressing Alt+x and then enter 
 | _complete_help  | Alt+2 Ctrl+x h     | as above but displays even more information                                                                                    |
 | _complete_debug | Ctrl+x ?           | performs ordinary completion, but captures in a temporary file a trace of the shell commands executed by the completion system |
 * Gotchas (things to watch out for)
-Remember to include a #compdef line at the beginning of the file containing the completion function.
+ - Remember to include a #compdef line at the beginning of the file containing the completion function.
 
-Take care to use the correct type of quoting for specifications to _arguments or _regex_arguments:
-use double quotes if there is a parameter that needs to be expanded in the specification, single quotes otherwise,
-and make sure to use different quotes around item descriptions.
+ - Do not include any spaces around equals symbols used in variable/array assignments.
 
-Check that you have the correct number of :'s in the correct places for specifications for _arguments, 
-_alternative, _regex_arguments, etc.
+ - Make sure to quote parentheses and vertical bars used for bracketing arguments to _regex_arguments
 
-Remember to include an initial pattern to match the command word when using _regex_arguments (it does not need a matching action).
+ - Take care to use the correct type of quoting for specifications to _arguments or _regex_arguments:
+   use double quotes if there is a parameter that needs to be expanded in the specification, single quotes otherwise,
+   and make sure to use different quotes around item descriptions.
 
-Remember to put a null char $'\0' at the end of any PATTERN argument for _regex_arguments
+ - Make sure you quote any asterisks (*) and colons (:) in option name and descriptions arguments to _alternatives, _regex_words, etc.
+
+ - Check that you have the correct number of :'s in the correct places for specifications for _arguments, 
+   _alternative, _regex_arguments, etc.
+
+ - Remember to include an initial pattern to match the command word when using _regex_arguments (it does not need a matching action).
+
+ - Remember to put a null char $'\0' at the end of any PATTERN argument for _regex_arguments
 * Tips
 Sometimes you have a situation where there is just one option that can come after a subcommand, and zsh will complete this 
 automatically when tab is pressed after the subcommand. If instead you want it listed with its description before completing 
