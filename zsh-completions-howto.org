@@ -430,6 +430,12 @@ Complete files in specific directory, but don't add that directory to the comman
 _files "$@" -W /path/to/dir/
 #+END_SRC
 
+Complete .csv files in specific directory, but don't add that directory to the command line:
+#+BEGIN_SRC
+_path_files "$@" -W /path/to/dir/ -g '*.csv'
+#+END_SRC
+
+
 Complete comma separated files:
 #+BEGIN_SRC 
 compset -P '*,'
