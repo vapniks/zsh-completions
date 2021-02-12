@@ -1,0 +1,46 @@
+#compdef cpan
+
+# zsh completion for cpan - a program for interacting with the perl CPAN repository, e.g. for downloading modules
+
+local matcharg=/$'[^\0- ]##\0'/
+
+local -a opt modulearg moduleargs filearg authorargs mirrorargs
+modulearg=(${matcharg} ':mod:module:{_guard "[^- ]#" "module"}')
+moduleargs=(${modulearg} \#)
+filearg=(${matcharg} ':file:file:_files')
+authorargs=(${matcharg} ':author:author:{_guard "[^- ]#" "author"}' \#)
+mirrorargs=(/$'[^\0 ]##\0'/ ':mirror:mirror:{_guard "[^ ]#" "comma separated list of mirrors"}')
+_regex_words opt 'options' '-a:Create a CPAN.pm autobundle.' \
+             '-A:Shows the primary maintainers for the specified modules.:$moduleargs' \
+	     '-c:Runs a "make clean" in the specified modules directories.:$modulearg' \
+	     '-C:Show the Changes files for the specified modules:$moduleargs' \
+	     '-D:Show modules details.:$moduleargs' \
+	     '-f:Force the specified action, when it normally would have failed.' \
+	     '-F:Turn off CPAN.pms attempts to lock anything (careful!).' \
+	     '-g:Download the latest distribution of the specified modules.:$moduleargs' \
+	     '-h:Print help message.' \
+	     '-i:Install the specified modules (default if no opts are supplied, but modules are).:$moduleargs' \
+	     '-I:Load "local;;lib".' \
+	     '-j:Load the file (given as arg) that has the CPAN configuration data.:$filearg' \
+	     '-J:Dump the configuration in the same format that CPAN.pm uses.' \
+	     '-l:List all installed modules with their versions.' \
+	     '-L:List the modules by the specified authors.:$authorargs' \
+	     '-m:Make the specified modules.:$moduleargs' \
+	     '-M:A comma-separated list of mirrors to use for just this run.:$mirrorargs' \
+	     '-O:Show the out-of-date modules.' \
+	     '-p:Ping the configured mirrors and print a report.' \
+	     '-P:Find the best mirrors you could be using and use them for the current session.' \
+	     '-r:Recompile dynamically loaded modules.' \
+	     '-s:Drop in the CPAN.pm shell (default if no modules are specified).' \
+	     '-t:Run a `make test` on the specified modules.:$moduleargs' \
+	     '-T:Do not test modules. Simply install them.' \
+	     '-u:Upgrade all installed modules. Blindly doing this can really break things, so keep a backup.' \
+	     '-v:Print the script version and CPAN.pm version then exit.' \
+	     '-V:Print detailed information about the cpan client.' \
+	     '-x:Find close matches to the named modules that you think you might have mistyped.:$moduleargs' \
+	     '-X:Dump all the namespaces to standard output.'
+	     
+opt=("${reply[@]}")
+
+_regex_arguments _cpan /$'[^\0]##\0'/ "${opt[@]}" \#
+
