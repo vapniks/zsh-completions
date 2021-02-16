@@ -2,7 +2,20 @@
 
 # zsh completion for gplaycli - a program for interacting with the google playstore app repository for android
 
-local devicenames="(BRAVIA_ATV2 JP-1601 K013_1 Tab_8_4C alien_jolla_bionic angler aries bacon bbb100 bravo bullhead cloudbook crackling cwv88s eeepad foster fp2 fresh fs454 gemini gtp7510 gts3llte hammerhead hero2lte honami kenzo m201 m3xx maguro mako manta nxtl09 oneplus3 pico sailfish shamu sloane t00q walleye wetekplay2)"
+local devicenames="((BRAVIA_ATV2\:'armeabi-v7a,armeabi' JP-1601\:'armeabi-v7a,armeabi' K013_1\:'x86,armeabi-v7a,armeabi'
+      Tab_8_4C\:'x86,armeabi-v7a' alien_jolla_bionic\:'armeabi-v7a,armeabi' angler\:'arm64-v8a,armeabi-v7a,armeabi'
+      aries\:'armeabi-v7a,armeabi' bacon\:'armeabi-v7a,armeabi' bbb100\:'arm64-v8a,armeabi-v7a,armeabi'
+      bravo\:'arm64-v8a,armeabi-v7a,armeabi' bullhead\:'arm64-v8a,armeabi-v7a,armeabi'
+      cloudbook\:'x86_64,x86,arm64-v8a,armeabi-v7a,armeabi' crackling\:'arm64-v8a,armeabi-v7a,armeabi'
+      cwv88s\:'armeabi-v7a,armeabi' eeepad\:'armeabi-v7a,armeabi' foster\:'arm64-v8a,armeabi-v7a,armeabi'
+      fp2\:'armeabi-v7a,armeabi' fresh\:'armeabi-v7a,armeabi' fs454\:'armeabi-v7a,armeabi'
+      gemini\:'arm64-v8a,armeabi-v7a,armeabi' gtp7510\:'armeabi-v7a,armeabi' gts3llte\:'arm64-v8a,armeabi-v7a,armeabi'
+      hammerhead\:'armeabi-v7a,armeabi' hero2lte\:'arm64-v8a,armeabi-v7a,armeabi' honami\:'armeabi-v7a,armeabi'
+      kenzo\:'arm64-v8a,armeabi-v7a,armeabi' m201\:'\:armeabi-v7a,armeabi' m3xx\:'armeabi-v7a,armeabi'
+      maguro\:'armeabi-v7a,armeabi' mako\:'armeabi-v7a,armeabi' manta\:'armeabi-v7a,armeabi'
+      nxtl09\:'arm64-v8a,armeabi-v7a,armeabi' oneplus3\:'arm64-v8a,armeabi-v7a,armeabi' pico\:'armeabi-v7a,armeabi'
+      sailfish\:'arm64-v8a,armeabi-v7a,armeabi' shamu\:'armeabi-v7a,armeabi' sloane\:'arm64-v8a,armeabi-v7a,armeabi'
+      t00q\:'x86,armeabi-v7a,armeabi' walleye\:'arm64-v8a,armeabi-v7a,armeabi' wetekplay2\:'armeabi-v7a,armeabi'))"
 
 _arguments : {-h,--help}'[show this help message and exit]' \
 	   {-V,--version}'[Print version number and exit]' \
@@ -25,8 +38,3 @@ _arguments : {-h,--help}'[show this help message and exit]' \
 	   {-c,--config}'[Use a different config file than gplaycli.conf]:file:{_files}' \
 	   {-p,--progress}'[Prompt a progress bar while downloading packages]' \
 	   {-L,--log}'[Enable logging of apps status in separate logging files]'
-	   
-
-
-
-
