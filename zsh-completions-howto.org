@@ -104,7 +104,7 @@ If you have a very large number of completions you can save them in a cache file
 | _message     | Used for displaying help messages in places where no completions can be generated.                                      |
 | _regex_words | Can be used to generate arguments for the _regex_arguments command. This is easier than writing the arguments manually. |
 | _guard       | Can be used in the ACTION of specifications for _arguments and similar functions to check the word being completed.     |
-*** Actions
+*** <<<Action>>>
 Many of the utility functions such as _arguments, _regex_arguments, _alternative and _values may include an action
 at the end of an option/argument specification. This action indicates how to complete the corresponding argument.
 The actions can take one of the following forms:

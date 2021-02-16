@@ -1,0 +1,40 @@
+#compdef fdroidcl
+
+# zsh completion for fdroidcl - a program for interacting with the fdroid app repository for android
+
+local matcharg=/$'[^\0]##\0'/
+local helpopt='-h:Show help'
+
+local -a opt appids categories intopt sortopt searchopts installopts kindopt
+appids=(${matcharg} ':appid:appid:{_guard "[a-zA-Z0-9_.]#" "appid"}' \#)
+categories=(${matcharg} ':category:category:{compadd "${(f)$(fdroidcl list categories)}"}')
+intopt=(${matcharg} ':int:days:{_guard "[-0-9]#" "days (integer)"}')
+sortopt=(${matcharg} ':order:order:(added updated)')
+kindopt=(${matcharg} ':kind:kind:(categories)')
+
+_regex_words searchopts 'options' "${helpopt}" \
+	     '-c:Filter apps by category:$categories' \
+	     '-d:Select apps last updated in the last \<n\> days\; a negative value drops them instead:$intopt' \
+	     '-i:Filter installed apps' \
+	     '-o:Sort order (added, updated):$sortopt' \
+	     '-q:Print package names only' \
+	     '-u:Filter apps with updates'
+searchopts=("${reply[@]}" \# ${matcharg} ":regexp:regexp:")
+
+_regex_words installopts 'options' "${helpopt}" '-n:Print the operations that would be done' '-u:Upgrade all installed apps'
+installopts=("${reply[@]}" \# ${matcharg} ':appid:appid:{_guard "[a-zA-Z0-9_.]" "appid"}' \#)
+
+_regex_words opt 'options' "${helpopt}" 'update:Update the index.' \
+             'search:Search available apps matching regexp:$searchopts' \
+	     'show:Show detailed info about apps (space separated list):$appids' \
+	     'install:Install or upgrade apps (space separated list):$installopts' \
+	     'uninstall:Uninstall app (space separated list):$appids' \
+	     'download:Download apps (space separated list):$appids' \
+	     'devices:List connected devices' \
+	     'list:List all known values of a kind:$kindopt' \
+	     'defaults:Reset to the default settings' \
+	     'version:Print version information'
+opt=("${reply[@]}")
+
+_regex_arguments _fdroidcl /$'[^\0]##\0'/ "${opt[@]}"
+
