@@ -1,0 +1,87 @@
+#compdef ngrok
+
+# zsh completion for the ngrok client CLI
+# You may need to alter the config_file parameter in _ngrok_tunnels below
+
+_ngrok_tunnels() {
+    local -a names
+    local config_file=~/.ngrok2/ngrok.yml
+    names=($(awk '/tunnels:/{x=1};/^ +[^: ]+: *$/{if(x==1){sub(":","",$1);print $1}}' ${config_file}))
+    compadd -a names
+}
+
+local matcharg=/$'[^\0 ]##\0'/
+local -a subcommands authtoken_opts http_opts start_opts tcp_opts tls_opts update_opts
+local -a regionarg logformat filearg loglvlarg authtokenarg hostarg tlsarg channelarg filearg
+local -a addrarg autharg boolarg namedtunnelarg
+regionarg=(${matcharg} ':region:region:(us eu au ap sa jp in)')
+logfmtarg=(${matcharg} ':format:format:(term logfmt json)')
+loglvlarg=(${matcharg} ':level:level:(crit warn error info debug)')
+filearg=(${matcharg} ':file:file:_files')
+authtokenarg=(${matcharg} ':token:token:{_guard "[^- ](#c30,60)" "token"}')
+configsarg=(${matcharg} ':file:file:_files' \#)
+filearg=(${matcharg} ':file:file:_files')
+hostarg=(${matcharg} ':host:host:{_guard "[a-zA-Z0-9-.]##" "hostname"}')
+tlsarg=(${matcharg} ':value:value:(true false both)')
+channelarg=(${matcharg} ':value:value:(stable beta)')
+addrarg=(${matcharg} ':address:address:{_guard "[^ ]##" "address"}')
+autharg=(${matcharg} ':userpass:userpass:{_guard "[^ ]##:[^ ]##" "user:pass"}')
+boolarg=(${matcharg} ':bool:bool:(true false)')
+namedtunnelarg=(${matcharg} ':tunnel:tunnel:{_ngrok_tunnels}') # TODO
+local logopt logfmtopt loglvlopt regionopt authtokenopt configsopt hostopt tlsopt
+logopt='--log:path to log file, stdout, stderr or false (default):$filearg'
+logfmtopt='--log-format:log record format (default=term):$logfmtarg'
+loglvlopt='--log-level:logging level (default=\"info\"):$loglvlarg'
+regionopt='--region:ngrok server region (default=us):$regionarg'
+authtokenopt='--authtoken:ngrok.com authtoken identifying a user:$authtokenarg'
+configsopt='--config:path to config files, they are merged if multiple:$configsarg'
+hostopt='--hostname:host tunnel on custom hostname (requires DNS CNAME):$hostarg'
+tlsopt='--bind-tls:listen for http, https or both (default):$tlsarg'
+
+# authtoken options
+_regex_words opt 'options' $logopt $logfmtopt $loglvlopt \
+   '--config:save in this config file (default=~/.ngrok2/ngrok.yml):$filearg'
+authtoken_opts=("${reply[@]}" \#)
+
+# http options
+_regex_words opt 'options' $logopt $logfmtopt $loglvlopt $regionopt $authtokenopt $configsopt $hostopt $tlsopt \
+   '--auth:username \& password (separated by colon) for tunnel endpoint:$autharg' \
+   '--host-header:set Host header (if \"rewrite\" use local address hostname):$hostarg' \
+   '--inspect:enable/disable http introspection:$boolarg'
+http_opts=("${reply[@]}" \#)
+
+# start options
+_regex_words opt 'options' $authtokenopt $logopt $logfmtopt $loglvlopt $regionopt $configsopt \
+	     '--all:start all tunnels in the configuration file' '--none:start running no tunnels'
+start_opts=("${reply[@]}" \# "${namedtunnelarg[@]}" \#)
+   
+# tcp options
+_regex_words opt 'options' $authtokenopt $logopt $logfmtopt $loglvlopt $regionopt $configsopt \
+   '--remote-addr:bind remote address (requires you reserve an address):$addrarg'
+tcp_opts=("${reply[@]}" \#)
+
+# tls options
+_regex_words opt 'options' $authtokenopt $configsopt $hostopt \
+   '--client-cas:path to TLS certificate authority to verify client certs:$filearg' \
+   '--crt:path to a TLS certificate for TLS termination:$filearg' \
+   '--key:path to a TLS key for TLS termination:$filearg'
+tls_opts=("${reply[@]}" \#)
+   
+# update options
+_regex_words opt 'options' $logopt $logfmtopt $loglvlopt '--channel:update channel (default=stable):$channelarg'
+update_opts=("${reply[@]}" \#)   
+
+# subcommands
+_regex_words cmd 'subcommands' \
+   'authtoken:save authtoken to configuration file:$authtoken_opts' \
+   'credits:prints author and licensing information' \
+   'http:start an HTTP tunnel:$http_opts:$http_opts' \
+   'start:start tunnels by name from the configuration file:$start_opts' \
+   'tcp:start a TCP tunnel:$tcp_opts' \
+   'tls:start a TLS tunnel:$tls_opts' \
+   'update:update ngrok to the latest version:$update_opts' \
+   'version:print the version string' \
+   'help:Shows a list of commands or help for one command'
+subcommands=("${reply[@]}")
+
+_regex_arguments _ngrok /$'[^\0]##\0'/ "${subcommands[@]}" 

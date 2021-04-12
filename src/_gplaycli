@@ -1,6 +1,9 @@
 #compdef gplaycli
 
 # zsh completion for gplaycli - a program for interacting with the google playstore app repository for android
+# Set GPLAYCLI_HOME to the directory containing your config files if different from the value below.
+
+: ${GPLAYCLI_HOME=~/.local/etc/gplaycli}
 
 local devicenames="((BRAVIA_ATV2\:'armeabi-v7a,armeabi' JP-1601\:'armeabi-v7a,armeabi' K013_1\:'x86,armeabi-v7a,armeabi'
       Tab_8_4C\:'x86,armeabi-v7a' alien_jolla_bionic\:'armeabi-v7a,armeabi' angler\:'arm64-v8a,armeabi-v7a,armeabi'
@@ -35,6 +38,6 @@ _arguments : {-h,--help}'[show this help message and exit]' \
 	   {-tu,--token-url}'[Use the given tokendispenser URL to retrieve a token]:url:' \
 	   {-ts,--token-str}'[Supply token string by yourself, need to also supply GSF_ID]:token:' \
 	   {-g,--gsfid}'[Supply GSF_ID by yourself, need to also supply token string]:gsfid:' \
-	   {-c,--config}'[Use a different config file than gplaycli.conf]:file:{_files}' \
+	   {-c,--config}'[Use a different config file than gplaycli.conf]:file:{_files -P ${GPLAYCLI_HOME%/}/ -W ${GPLAYCLI_HOME}}'\
 	   {-p,--progress}'[Prompt a progress bar while downloading packages]' \
 	   {-L,--log}'[Enable logging of apps status in separate logging files]'
