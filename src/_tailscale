@@ -45,7 +45,7 @@ netcheck_opts=("${reply[@]}" \#)
 _regex_words opt 'options' \
   '-active:filter output to only peers with active sessions (not applicable to web mode)' \
   '-browser:Open a browser in web mode' \
-  '-json:output in JSON format (WARNING: format subject to change)' \
+  '-json:output in JSON format (WARNING\; format subject to change)' \
   '-listen:listen address for web mode\; use port 0 for automatic:$ipportarg' \
   '-peers:show status of peers' \
   '-self:show status of local machine' \
