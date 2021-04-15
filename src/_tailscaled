@@ -7,9 +7,7 @@ _arguments '-cleanup[clean up system state and exit]' \
 	   '-port[UDP port to listen on for WireGuard and peer-to-peer traffic; 0 (default) means automatically select]:port:{_guard "[0-9]##" "port"}' \
 	   '-socket[path of the service unix socket (default "/var/run/tailscale/tailscaled.sock")]:socket:_files' \
 	   '-socks5-server[optional ip\:port to run a SOCK5 server (e.g. "localhost\:1080")]:server:{_guard "[0-9.\:]##" "ip\:port"}' \
-	   '-state[path of state file]:file:_files' \
+	   '-state[path of state file (default=/var/lib/tailscale/tailscaled.state)]:file:_files' \
 	   '-tun[tunnel interface name; use "userspace-networking" to not use TUN (default "tailscale0")]:iface:{_guard "[a-zA-Z0-9_-]##" "interface name"}' \
 	   '-verbose[log verbosity level; 0 is default, 1 or higher are increasingly verbose]:number:(0 1 2 3 4 5)' \
 	   '-version[print version information and exit]'
-
-
