@@ -1,13 +1,11 @@
 #compdef tailscale
 
 # zsh completion for the tailscale client CLI
-# You may need to alter the config_file parameter in _tailscale_tunnels below
 
 local matcharg=/$'[^\0 ]##\0'/
 local -a subcommands up_opts netcheck_opts status_opts ping_opts version_opts
-local -a boolarg routesarg tagsarg iparg hostarg urlarg netfiltermodearg authkeyarg
+local -a routesarg tagsarg iparg hostarg urlarg netfiltermodearg authkeyarg
 local -a freqarg formatarg
-boolarg=(${matcharg} ':bool:bool:(true false)')
 routesarg=(${matcharg} ':routes:routes:{_guard "[0-9.,/]##" "routes"}')
 tagsarg=(${matcharg} ':tags:tags:{_guard "[a-z,]##" "tags"}')
 iparg=(${matcharg} ':ip:ip:{_guard "[0-9.]##" "IP address"}')
@@ -22,46 +20,46 @@ pingsarg=(${matcharg} ':number:number:{_guard "[0-9]##" "number of pings"}')
 
 # up options
 _regex_words opt 'options' \
-  '-accept-dns:accept DNS configuration from the admin panel (default=true):$boolarg' \
-  '-accept-routes:accept routes advertised by other Tailscale nodes (default=false):$boolarg' \
-  '-advertise-exit-node:offer to be an exit node for internet traffic for tailnet (default=false):$boolarg' \
+  '-accept-dns:accept DNS configuration from the admin panel' \
+  '-accept-routes:accept routes advertised by other Tailscale nodes' \
+  '-advertise-exit-node:offer to be an exit node for internet traffic for tailnet' \
   '-advertise-routes:routes to advertise to other nodes (comma-separated, e.g. 10.0.0.0/8,192.168.0.0/24):$routesarg' \
   '-advertise-tags:ACL tags to request (comma-separated, e.g. eng,montreal,ssh):$tagsarg' \
   '-authkey:node authorization key:$authkeyarg' \
   '-exit-node:Tailscale IP of the exit node for internet traffic:$iparg' \
-  '-force-reauth:force reauthentication (default=false):$boolarg' \
-  '-host-routes:install host routes to other Tailscale nodes (default=true):$boolarg' \
+  '-force-reauth:force reauthentication' \
+  '-host-routes:install host routes to other Tailscale nodes' \
   '-hostname:hostname to use instead of the one provided by the OS:$hostarg' \
   '-login-server:base URL of control server (default=https//login.tailscale.com):$urlarg' \
   '-netfilter-mode:netfilter mode (default=on):$netfiltermodearg' \
-  '-shields-up:dont allow incoming connections (default=false):$boolarg' \
-  '-snat-subnet-routes:source NAT traffic to local routes advertised with --advertise-routes (default=true):$boolarg'
+  '-shields-up:dont allow incoming connections' \
+  '-snat-subnet-routes:source NAT traffic to local routes advertised with --advertise-routes'
 up_opts=("${reply[@]}" \#)
 
 _regex_words opt 'options' \
   '-every:if non-zero, do an incremental report with the given frequency (default=0s):$secsarg' \
   '-format:output format\; empty (for human-readable), "json" or "json-line":$formatarg' \
-  '-verbose:verbose logs:$boolarg'
+  '-verbose:verbose logs'
 netcheck_opts=("${reply[@]}" \#)
 
 _regex_words opt 'options' \
-  '-active:filter output to only peers with active sessions (not applicable to web mode):$boolarg' \
-  '-browser:Open a browser in web mode:$boolarg' \
-  '-json:output in JSON format (WARNING: format subject to change):$boolarg' \
+  '-active:filter output to only peers with active sessions (not applicable to web mode)' \
+  '-browser:Open a browser in web mode' \
+  '-json:output in JSON format (WARNING: format subject to change)' \
   '-listen:listen address for web mode\; use port 0 for automatic:$ipportarg' \
-  '-peers:show status of peers:$boolarg' \
-  '-self:show status of local machine:$boolarg' \
-  '-web:run webserver with HTML showing status:$boolarg'
+  '-peers:show status of peers' \
+  '-self:show status of local machine' \
+  '-web:run webserver with HTML showing status'
 status_opts=("${reply[@]}" \#)
 
 _regex_words opt 'options' \
   '-c:max number of pings to send (default=10):$pingsarg' \
   '-timeout:timeout before giving up on a ping (default=5s):$secsarg' \
-  '-until-direct:stop once a direct path is established:$boolarg' \
-  '-verbose:verbose output:$boolarg'
+  '-until-direct:stop once a direct path is established' \
+  '-verbose:verbose output'
 ping_opts+=(\( "${hostarg[@]}" \| "${iparg[@]}" \) "${reply[@]}" \#)
 
-_regex_words opt 'options' '-daemon:also print local nodes daemon version:$boolarg'
+_regex_words opt 'options' '-daemon:also print local nodes daemon version'
 version_opts=("${reply[@]}")
 
 # subcommands
