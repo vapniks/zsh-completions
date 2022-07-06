@@ -158,7 +158,7 @@ Like _describe, this function performs simple completions where the order and po
 However, unlike _describe, you can call execute shell code or call functions to obtain the completion candidates.
 
 As arguments it takes a list of specifications each in the form 'TAG:DESCRIPTION:ACTION' where TAG is a tag name, 
-DESCRIPTION is a description, and ACTION is one of the action types listed previously (apart from the ->STRING and =ACTION forms).
+DESCRIPTION is a description (not containing square brackets or (semi-)colons), and ACTION is one of the action types listed previously (apart from the ->STRING and =ACTION forms).
 For example:
 #+BEGIN_SRC sh 
 _alternative 'args:custom args:(a b c)' 'files:filenames:_files'
@@ -335,8 +335,8 @@ of a specification for _regex_arguments.
 
 To create a specification using _regex_words you supply it with a tag followed by a description followed by a list
 of specifications for individual words. These specifications take the form 'WORD:DESCRIPTION:SPEC' where WORD is the 
-word to be completed, DESCRIPTION is a description for it (must be non-empty), and SPEC can be another variable created by _regex_words 
-specifying words that come after the current word or blank if there are no further words.
+word to be completed, DESCRIPTION is a description for it (must be non-empty and not contain square brackets or (semi-)colons), 
+and SPEC can be another variable created by _regex_words specifying words that come after the current word or blank if there are no further words.
 For example:
 #+BEGIN_SRC sh 
 _regex_words firstword 'The first word' 'word1a:a word:' 'word1b:b word:' 'word1c:c word'
@@ -515,7 +515,8 @@ If the default keybindings don't work you can try pressing Alt+x and then enter 
    use double quotes if there is a parameter that needs to be expanded in the specification, single quotes otherwise,
    and make sure to use different quotes around item descriptions.
 
- - Make sure you quote any asterisks (*) and colons (:) in option name and descriptions arguments to _alternatives, _regex_words, etc.
+ - Make sure you quote any asterisks (*) and dollars ($) in option name and descriptions arguments to _alternatives, _regex_words etc,
+   and don't include any square brackets or (semi-)colons.
 
  - Check that you have the correct number of :'s in the correct places for specifications for _arguments, 
    _alternative, _regex_arguments, etc.
