@@ -114,7 +114,7 @@ The actions can take one of the following forms:
 | ->STRING                          | Set $state to STRING and continue ($state can be checked in a case statement after the utility function call)                            |
 | FUNCTION                          | Name of a function to call for generating matches or performing some other action, e.g. _files or _message                               |
 | {EVAL-STRING}                     | Evaluate string as shell code to generate matches. This can be used to call a utility function with arguments, e.g. _values or _describe |
-| =ACTION                           | Inserts a dummy word into completion command line without changing the point at which completion takes place.                            |
+| = ACTION                          | Inserts a dummy word into completion command line without changing the point at which completion takes place.                            |
 Not all action types are available for all utility functions that use them. For example the ->STRING type is not available in the
 _regex_arguments or _alternative functions (but is available for _arguments).
 ** Useful variables
