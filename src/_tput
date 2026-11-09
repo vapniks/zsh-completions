@@ -1,4 +1,4 @@
-#compdef tput
+#compdef tput echoti
 
 # Completion for tput(1).
 # terminfo codes, termcap codes and descriptions are extracted from
@@ -96,18 +96,24 @@ _tput() {
   local curcontext="$curcontext" state state_descr line ret=1
   typeset -A opt_args
 
-  _arguments -s -C \
-    '-T+[terminal type]:terminal type:_terminals' \
-    '-S[read capabilities from standard input, one per line]' \
-    '-V[display version and exit]' \
-    '-x[do not try to clear the scrollback buffer (with clear)]' \
-    '1: :->cap' \
-    '*: :->params' && ret=0
+  if [[ $service == echoti ]]; then
+    _arguments -C \
+      '1: :->cap' \
+      '*: :->params' && ret=0
+  else
+    _arguments -s -C \
+      '-T+[terminal type]:terminal type:_terminals' \
+      '-S[read capabilities from standard input, one per line]' \
+      '-V[display version and exit]' \
+      '-x[do not try to clear the scrollback buffer (with clear)]' \
+      '1: :->cap' \
+      '*: :->params' && ret=0
+  fi
 
   case $state in
     cap)
       local term=${(Q)opt_args[-T]:-$TERM} c
-      local -a reply caps codes exts
+      local -a reply caps codes exts alts
       local -a cmds=(
         'init:initialize the terminal'
         'reset:reset the terminal'
@@ -133,11 +139,18 @@ _tput() {
         done
       fi
 
-      _alternative \
-        'commands:tput command: _describe -t commands "tput command" cmds' \
-        'tinfo-codes:terminfo code: _describe -t tinfo-codes "terminfo code" caps' \
-        'tcap-codes:termcap code: _describe -t tcap-codes "termcap code" codes' \
-        'user-caps:user-defined capability: _describe -t user-caps "user-defined capability" exts' && ret=0
+      alts=(
+        'tinfo-codes:terminfo code: _describe -t tinfo-codes "terminfo code" caps'
+        'user-caps:user-defined capability: _describe -t user-caps "user-defined capability" exts'
+      )
+      if [[ $service != echoti ]]; then
+        alts=(
+          'commands:tput command: _describe -t commands "tput command" cmds'
+          $alts
+          'tcap-codes:termcap code: _describe -t tcap-codes "termcap code" codes'
+        )
+      fi
+      _alternative $alts && ret=0
       ;;
     params)
       _message -e parameters 'capability parameter'
