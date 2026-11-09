@@ -1,0 +1,150 @@
+#compdef tput
+
+# Completion for tput(1).
+# terminfo codes, termcap codes and descriptions are extracted from
+# terminfo(5) via "man -P cat terminfo" and cached (in memory, and in the
+# completion cache if 'zstyle ":completion:*" use-cache on' is set).
+# The capabilities offered are restricted to those defined for the terminal
+# in use ($TERM, or the -T argument), as reported by infocmp(1).
+
+# There are 4 sets of argument completions:
+#     commands (clear, init, longname & reset), tinfo-codes (terminfo capability codes), 
+#     tcap-codes (termcap capability codes) & user-caps
+# You can choose which ones are available using the tag-order zstyle, e.g:
+#     zstyle ':completion:*:tput:*' tag-order 'commands tinfo-codes user-caps'
+# (keep all apart from termcap codes).
+
+typeset -gA _tput_desc _tput_tcap _tput_term_cache
+typeset -g  _tput_caps_loaded
+
+# Fill _tput_desc / _tput_tcap from terminfo(5).
+_tput_load_caps() {
+  local line
+  local -a raw parts
+
+  [[ -n $_tput_caps_loaded ]] && return 0
+  _tput_caps_loaded=1
+
+  if _cache_invalid tput || ! _retrieve_cache tput; then
+    # LC_ALL=C => plain ASCII hyphens, so hyphenated wraps can be re-joined.
+    raw=( ${(f)"$(
+      LC_ALL=C MANWIDTH=250 COLUMNS=250 GROFF_NO_SGR=1 MAN_KEEP_FORMATTING= \
+      man -P cat terminfo 2>/dev/null | col -bx | awk '
+        function trim(s) { sub(/^ +/, "", s); sub(/ +$/, "", s); return s }
+        function flush() {
+          if (cap != "") print cap "\t" tcap "\t" desc
+          cap = tcap = desc = ""
+        }
+        # Table header:  Variable   Cap-   TCap   Description
+        #                Booleans   name   Code
+        /^ *Variable +Cap-.*Description/ { flush(); intable = 1; desccol = 0; next }
+        !intable { next }
+        /^ *[A-Za-z]+ +name +Code *$/ { next }        # 2nd header line
+        /^ *$/ { flush(); next }                       # page break: table continues
+        # Continuation: blank up to the description column, text after it.
+        cap != "" && desccol && substr($0, 1, desccol - 1) ~ /^ *$/ && substr($0, desccol) ~ /[^ ]/ {
+          s = trim(substr($0, desccol))
+          if (desc ~ /-$/) { sub(/-$/, "", desc); desc = desc s }
+          else desc = (desc == "" ? s : desc " " s)
+          next
+        }
+        # New row: variable  capname  tcapcode  description...
+        NF >= 4 && $1 ~ /^[a-z][a-z0-9_]*$/ && $0 ~ /^ *[^ ]+ +[^ ]+ +[^ ]+ +[^ ]/ {
+          flush()
+          cap = $2; tcap = $3
+          match($0, /^ *[^ ]+ +[^ ]+ +[^ ]+ +/)   # description starts after 3 fields
+          desccol = RLENGTH + 1
+          desc = trim(substr($0, desccol))
+          next
+        }
+        # Anything else (prose) ends the table.
+        { flush(); intable = 0 }
+        END { flush() }
+      '
+    )"} )
+    (( $#raw )) && _store_cache tput raw
+  fi
+
+  _tput_desc=() _tput_tcap=()
+  for line in $raw; do
+    parts=( "${(@ps:\t:)line}" )
+    (( $#parts >= 3 )) || continue
+    _tput_desc[${parts[1]}]=${parts[3]//:/\\:}      # escape ':' for _describe
+    _tput_tcap[${parts[1]}]=${parts[2]}
+  done
+  (( $#_tput_desc ))
+}
+
+# Set $reply to the capnames defined for terminal $1 (via infocmp -x).
+# Returns non-zero if the terminal is unknown / infocmp failed.
+_tput_term_caps() {
+  local term=$1
+  local -a lines
+
+  if (( ! ${+_tput_term_cache[$term]} )); then
+    lines=( ${(f)"$(infocmp -1x "$term" 2>/dev/null)"} )
+    lines=( ${lines:#[^[:space:]]*} )              # drop name line and comments
+    lines=( ${lines:#[^=\#]##@,} )                  # drop cancelled capabilities
+    lines=( ${${lines##[[:space:]]##}%%[=\#,]*} )  # keep bare capnames
+    _tput_term_cache[$term]="${(j: :)lines}"
+  fi
+  reply=( ${=_tput_term_cache[$term]} )
+  (( $#reply ))
+}
+
+_tput() {
+  local curcontext="$curcontext" state state_descr line ret=1
+  typeset -A opt_args
+
+  _arguments -s -C \
+    '-T+[terminal type]:terminal type:_terminals' \
+    '-S[read capabilities from standard input, one per line]' \
+    '-V[display version and exit]' \
+    '-x[do not try to clear the scrollback buffer (with clear)]' \
+    '1: :->cap' \
+    '*: :->params' && ret=0
+
+  case $state in
+    cap)
+      local term=${(Q)opt_args[-T]:-$TERM} c
+      local -a reply caps codes exts
+      local -a cmds=(
+        'init:initialize the terminal'
+        'reset:reset the terminal'
+        'longname:print the long name of the terminal'
+        'clear:clear the screen'
+      )
+
+      _tput_load_caps
+      if _tput_term_caps "$term"; then
+        for c in $reply; do
+          if (( ${+_tput_desc[$c]} )); then
+            caps+=( "$c:${_tput_desc[$c]}" )
+            [[ -n ${_tput_tcap[$c]} ]] && codes+=( "${_tput_tcap[$c]}:${_tput_desc[$c]}" )
+          else
+            exts+=( "$c" )
+          fi
+        done
+      else
+        # Unknown terminal: fall back to everything documented.
+        for c in ${(k)_tput_desc}; do
+          caps+=( "$c:${_tput_desc[$c]}" )
+          codes+=( "${_tput_tcap[$c]}:${_tput_desc[$c]}" )
+        done
+      fi
+
+      _alternative \
+        'commands:tput command: _describe -t commands "tput command" cmds' \
+        'tinfo-codes:terminfo code: _describe -t tinfo-codes "terminfo code" caps' \
+        'tcap-codes:termcap code: _describe -t tcap-codes "termcap code" codes' \
+        'user-caps:user-defined capability: _describe -t user-caps "user-defined capability" exts' && ret=0
+      ;;
+    params)
+      _message -e parameters 'capability parameter'
+      ret=0
+      ;;
+  esac
+  return ret
+}
+
+_tput "$@"
